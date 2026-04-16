@@ -4,20 +4,20 @@
 - Dzmitry Nikitsin dnikitin@student.agh.edu.pl
 - Niaz Labkoyski
 
-Założenia programu
+## Założenia programu
 Translator zapytań SQL-like dla danych zapisanych w formacie JSON.
 
-Ogólne cele programu
+## Ogólne cele programu
 Program ma umożliwiać wykonywanie zapytań na danych JSON poprzez tłumaczenie ich do kodu JavaScript.
 
-Rodzaj translatora
+## Rodzaj translatora
 Kompilator.
 
-Planowany wynik działania programu
+## Planowany wynik działania programu
 Generator kodu JavaScript realizującego zapytanie na pliku JSON.
 
-Planowany język implementacji
+## Planowany język implementacji
 JavaScript.
 
-Generator parsera
+## Generator parsera
 ANTLR4.
