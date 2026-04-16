@@ -2,7 +2,7 @@
 
 ## Zespol 
 - Dzmitry Nikitsin dnikitin@student.agh.edu.pl
-- Niaz Labkoyski
+- Niaz Lapkouski
 
 ## Założenia programu
 Translator zapytań SQL-like dla danych zapisanych w formacie JSON.
