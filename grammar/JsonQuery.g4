@@ -1,0 +1,138 @@
+grammar JsonQuery;
+
+// ========================
+// Parser Rules
+// ========================
+
+query
+    : selectStmt EOF
+    ;
+
+selectStmt
+    : SELECT selectList
+      FROM source
+      unnestClause*
+      whereClause?
+      orderByClause?
+      limitClause?
+    ;
+
+selectList
+    : STAR                                  # SelectAll
+    | selectItem (COMMA selectItem)*        # SelectItems
+    ;
+
+selectItem
+    : expr (AS IDENTIFIER)?
+    ;
+
+source
+    : IDENTIFIER
+    ;
+
+unnestClause
+    : UNNEST LPAREN path RPAREN AS IDENTIFIER
+    ;
+
+whereClause
+    : WHERE expr
+    ;
+
+orderByClause
+    : ORDER BY orderItem (COMMA orderItem)*
+    ;
+
+orderItem
+    : path direction=(ASC | DESC)?
+    ;
+
+limitClause
+    : LIMIT INTEGER_LIT
+    ;
+
+// Priorytety operatorów zakodowane kolejnością alternatyw
+// (pierwsza = najniższy priorytet, ostatnia = najwyższy)
+expr
+    : expr OR  expr                         # OrExpr
+    | expr AND expr                         # AndExpr
+    | NOT expr                              # NotExpr
+    | expr compOp expr                      # CompareExpr
+    | expr (PLUS  | MINUS) expr             # AddExpr
+    | expr (STAR  | SLASH) expr             # MulExpr
+    | MINUS expr                            # UnaryMinus
+    | primary                               # PrimaryExpr
+    ;
+
+primary
+    : COUNT LPAREN path RPAREN              # CountAgg
+    | path                                  # PathExpr
+    | literal                               # LiteralExpr
+    | LPAREN expr RPAREN                    # ParenExpr
+    ;
+
+path
+    : IDENTIFIER (DOT IDENTIFIER)*
+    ;
+
+literal
+    : INTEGER_LIT
+    | FLOAT_LIT
+    | STRING_LIT
+    | BOOLEAN_LIT
+    | NULL
+    ;
+
+compOp
+    : EQ | NEQ | LT | GT | LEQ | GEQ
+    ;
+
+// ========================
+// Lexer Rules
+// ========================
+
+// Słowa kluczowe (case-insensitive, przed IDENTIFIER)
+SELECT  : [Ss][Ee][Ll][Ee][Cc][Tt] ;
+FROM    : [Ff][Rr][Oo][Mm] ;
+WHERE   : [Ww][Hh][Ee][Rr][Ee] ;
+ORDER   : [Oo][Rr][Dd][Ee][Rr] ;
+BY      : [Bb][Yy] ;
+LIMIT   : [Ll][Ii][Mm][Ii][Tt] ;
+UNNEST  : [Uu][Nn][Nn][Ee][Ss][Tt] ;
+AS      : [Aa][Ss] ;
+AND     : [Aa][Nn][Dd] ;
+OR      : [Oo][Rr] ;
+NOT     : [Nn][Oo][Tt] ;
+ASC     : [Aa][Ss][Cc] ;
+DESC    : [Dd][Ee][Ss][Cc] ;
+COUNT   : [Cc][Oo][Uu][Nn][Tt] ;
+NULL    : [Nn][Uu][Ll][Ll] ;
+
+BOOLEAN_LIT : [Tt][Rr][Uu][Ee] | [Ff][Aa][Ll][Ss][Ee] ;
+
+IDENTIFIER  : [a-zA-Z_] [a-zA-Z_0-9]* ;
+
+FLOAT_LIT   : [0-9]+ '.' [0-9]* | '.' [0-9]+ ;
+INTEGER_LIT : [0-9]+ ;
+STRING_LIT  : '"'  ( ~["\\] | '\\' . )* '"'
+            | '\'' ( ~['\\] | '\\' . )* '\''
+            ;
+
+// Operatory (wieloznakowe przed jednoznakowymi)
+LEQ     : '<=' ;
+GEQ     : '>=' ;
+NEQ     : '!=' ;
+EQ      : '='  ;
+LT      : '<'  ;
+GT      : '>'  ;
+PLUS    : '+' ;
+MINUS   : '-' ;
+STAR    : '*' ;
+SLASH   : '/' ;
+LPAREN  : '(' ;
+RPAREN  : ')' ;
+COMMA   : ',' ;
+DOT     : '.' ;
+
+// Pomijane
+WS          : [ \t\r\n]+  -> skip ;
+LINE_COMMENT : '--' ~[\r\n]* -> skip ;
