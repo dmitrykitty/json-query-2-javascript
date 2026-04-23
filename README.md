@@ -54,7 +54,7 @@ ANTLR4.
 |---|---|
 | Nawigacja przez zagnieżdżone **obiekty** | Dozwolona bezpośrednio: `address.city` |
 | Nawigacja przez **tablice** | Wymaga jawnego `UNNEST(pole) AS alias` |
-| Agregatów | Tylko `COUNT(ścieżka)` — zlicza elementy tablicy danego rekordu |
+| Agregatów | `COUNT`, `SUM`, `AVG`, `MIN`, `MAX` — operują na tablicy wewnątrz rekordu |
 | Joinów | Prosty `JOIN ... ON` — łączenie dwóch źródeł JSON po warunku |
 | Wynik | Wewnętrznie lista obiektów JS; eksport jako JSON lub wydruk do terminala |
 
@@ -71,6 +71,10 @@ SELECT name, tag FROM users UNNEST(tags) AS tag WHERE tag = 'admin'
 
 -- Zliczanie elementów tablicy (agregat na poziomie rekordu)
 SELECT name, COUNT(orders) FROM customers WHERE COUNT(orders) > 3
+
+-- Inne funkcje agregujące na tablicach
+SELECT name, SUM(orders.total), AVG(orders.total) FROM customers
+WHERE MAX(orders.total) > 100
 
 -- Złożone warunki i sortowanie po głębokiej ścieżce
 SELECT id, profile.bio FROM users
@@ -112,6 +116,10 @@ Białe znaki i komentarze liniowe (`--`) są pomijane (nie trafiają do strumien
 | `ASC` | `[Aa][Ss][Cc]` | Sortowanie rosnące |
 | `DESC` | `[Dd][Ee][Ss][Cc]` | Sortowanie malejące |
 | `COUNT` | `[Cc][Oo][Uu][Nn][Tt]` | Agregat: liczba elementów tablicy |
+| `SUM` | `[Ss][Uu][Mm]` | Agregat: suma elementów tablicy |
+| `AVG` | `[Aa][Vv][Gg]` | Agregat: średnia elementów tablicy |
+| `MIN_F` | `[Mm][Ii][Nn]` | Agregat: minimum tablicy |
+| `MAX_F` | `[Mm][Aa][Xx]` | Agregat: maksimum tablicy |
 | `NULL` | `[Nn][Uu][Ll][Ll]` | Literał null |
 | `JOIN` | `[Jj][Oo][Ii][Nn]` | Łączenie dwóch źródeł JSON |
 | `ON` | `[Oo][Nn]` | Warunek łączenia w JOIN |
@@ -240,10 +248,14 @@ expr
     ;
 
 primary
-    : COUNT LPAREN path RPAREN              # CountAgg
+    : aggFunc LPAREN path RPAREN           # AggExpr
     | path                                  # PathExpr
     | literal                               # LiteralExpr
     | LPAREN expr RPAREN                    # ParenExpr
+    ;
+
+aggFunc
+    : COUNT | SUM | AVG | MIN_F | MAX_F
     ;
 
 path
@@ -281,6 +293,10 @@ NOT     : [Nn][Oo][Tt] ;
 ASC     : [Aa][Ss][Cc] ;
 DESC    : [Dd][Ee][Ss][Cc] ;
 COUNT   : [Cc][Oo][Uu][Nn][Tt] ;
+SUM     : [Ss][Uu][Mm] ;
+AVG     : [Aa][Vv][Gg] ;
+MIN_F   : [Mm][Ii][Nn] ;
+MAX_F   : [Mm][Aa][Xx] ;
 NULL    : [Nn][Uu][Ll][Ll] ;
 JOIN    : [Jj][Oo][Ii][Nn] ;
 ON      : [Oo][Nn] ;

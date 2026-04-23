@@ -73,10 +73,14 @@ expr
     ;
 
 primary
-    : COUNT LPAREN path RPAREN              # CountAgg
+    : aggFunc LPAREN path RPAREN           # AggExpr
     | path                                  # PathExpr
     | literal                               # LiteralExpr
     | LPAREN expr RPAREN                    # ParenExpr
+    ;
+
+aggFunc
+    : COUNT | SUM | AVG | MIN_F | MAX_F
     ;
 
 path
@@ -114,6 +118,10 @@ NOT     : [Nn][Oo][Tt] ;
 ASC     : [Aa][Ss][Cc] ;
 DESC    : [Dd][Ee][Ss][Cc] ;
 COUNT   : [Cc][Oo][Uu][Nn][Tt] ;
+SUM     : [Ss][Uu][Mm] ;
+AVG     : [Aa][Vv][Gg] ;
+MIN_F   : [Mm][Ii][Nn] ;
+MAX_F   : [Mm][Aa][Xx] ;
 NULL    : [Nn][Uu][Ll][Ll] ;
 JOIN    : [Jj][Oo][Ii][Nn] ;
 ON      : [Oo][Nn] ;
