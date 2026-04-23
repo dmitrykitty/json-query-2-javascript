@@ -55,7 +55,7 @@ ANTLR4.
 | Nawigacja przez zagnieżdżone **obiekty** | Dozwolona bezpośrednio: `address.city` |
 | Nawigacja przez **tablice** | Wymaga jawnego `UNNEST(pole) AS alias` |
 | Agregatów | Tylko `COUNT(ścieżka)` — zlicza elementy tablicy danego rekordu |
-| Joinów | Brak pełnych join-ów; dwa pliki JSON można łączyć przez proste UNNEST |
+| Joinów | Prosty `JOIN ... ON` — łączenie dwóch źródeł JSON po warunku |
 | Wynik | Wewnętrznie lista obiektów JS; eksport jako JSON lub wydruk do terminala |
 
 ---
@@ -77,6 +77,13 @@ SELECT id, profile.bio FROM users
 WHERE age >= 21 AND profile.active = true
 ORDER BY profile.score DESC
 LIMIT 5
+
+-- Prosty JOIN dwóch źródeł JSON
+SELECT u.name, o.product, o.total
+FROM users AS u
+JOIN orders AS o ON u.id = o.userId
+WHERE o.total > 100
+ORDER BY o.total DESC
 ```
 
 ---
@@ -106,6 +113,8 @@ Białe znaki i komentarze liniowe (`--`) są pomijane (nie trafiają do strumien
 | `DESC` | `[Dd][Ee][Ss][Cc]` | Sortowanie malejące |
 | `COUNT` | `[Cc][Oo][Uu][Nn][Tt]` | Agregat: liczba elementów tablicy |
 | `NULL` | `[Nn][Uu][Ll][Ll]` | Literał null |
+| `JOIN` | `[Jj][Oo][Ii][Nn]` | Łączenie dwóch źródeł JSON |
+| `ON` | `[Oo][Nn]` | Warunek łączenia w JOIN |
 
 ### Literały
 
@@ -140,6 +149,7 @@ Białe znaki i komentarze liniowe (`--`) są pomijane (nie trafiają do strumien
 | `RPAREN` | `)` | Nawias zamykający |
 | `COMMA` | `,` | Separator elementów listy |
 | `DOT` | `.` | Separator segmentów ścieżki |
+| `SEMICOLON` | `;` | Separator zapytań |
 
 ### Tokeny pomijane
 
@@ -161,13 +171,18 @@ Poniżej opis struktury gramatyki z komentarzem do kluczowych decyzji.
 ```antlr
 grammar JsonQuery;
 
+program
+    : query+ EOF
+    ;
+
 query
-    : selectStmt EOF
+    : selectStmt SEMICOLON
     ;
 
 selectStmt
     : SELECT selectList
       FROM source
+      joinClause?
       unnestClause*
       whereClause?
       orderByClause?
@@ -184,7 +199,11 @@ selectItem
     ;
 
 source
-    : IDENTIFIER
+    : IDENTIFIER (AS IDENTIFIER)?
+    ;
+
+joinClause
+    : JOIN IDENTIFIER (AS IDENTIFIER)? ON expr
     ;
 
 unnestClause
@@ -263,6 +282,8 @@ ASC     : [Aa][Ss][Cc] ;
 DESC    : [Dd][Ee][Ss][Cc] ;
 COUNT   : [Cc][Oo][Uu][Nn][Tt] ;
 NULL    : [Nn][Uu][Ll][Ll] ;
+JOIN    : [Jj][Oo][Ii][Nn] ;
+ON      : [Oo][Nn] ;
 
 BOOLEAN_LIT : [Tt][Rr][Uu][Ee] | [Ff][Aa][Ll][Ss][Ee] ;
 
@@ -275,7 +296,7 @@ STRING_LIT  : '"'  ( ~["\\\r\n] | '\\' . )* '"'
             ;
 
 // Operatory (wieloznakowe przed jednoznakowymi)
-STAR    : '*' ;   COMMA   : ',' ;   DOT     : '.' ;
+STAR    : '*' ;   COMMA   : ',' ;   DOT     : '.' ;   SEMICOLON : ';' ;
 LPAREN  : '(' ;   RPAREN  : ')' ;
 PLUS    : '+' ;   MINUS   : '-' ;   SLASH   : '/' ;
 LEQ     : '<=' ;  GEQ     : '>=' ;  NEQ     : '!=' ;

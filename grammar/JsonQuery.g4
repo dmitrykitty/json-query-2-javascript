@@ -4,13 +4,18 @@ grammar JsonQuery;
 // Parser Rules
 // ========================
 
+program
+    : query+ EOF
+    ;
+
 query
-    : selectStmt EOF
+    : selectStmt SEMICOLON
     ;
 
 selectStmt
     : SELECT selectList
       FROM source
+      joinClause?
       unnestClause*
       whereClause?
       orderByClause?
@@ -27,7 +32,11 @@ selectItem
     ;
 
 source
-    : IDENTIFIER
+    : IDENTIFIER (AS IDENTIFIER)?
+    ;
+
+joinClause
+    : JOIN IDENTIFIER (AS IDENTIFIER)? ON expr
     ;
 
 unnestClause
@@ -106,6 +115,8 @@ ASC     : [Aa][Ss][Cc] ;
 DESC    : [Dd][Ee][Ss][Cc] ;
 COUNT   : [Cc][Oo][Uu][Nn][Tt] ;
 NULL    : [Nn][Uu][Ll][Ll] ;
+JOIN    : [Jj][Oo][Ii][Nn] ;
+ON      : [Oo][Nn] ;
 
 BOOLEAN_LIT : [Tt][Rr][Uu][Ee] | [Ff][Aa][Ll][Ss][Ee] ;
 
@@ -132,6 +143,7 @@ LPAREN  : '(' ;
 RPAREN  : ')' ;
 COMMA   : ',' ;
 DOT     : '.' ;
+SEMICOLON : ';' ;
 
 // Pomijane
 WS          : [ \t\r\n]+  -> skip ;
